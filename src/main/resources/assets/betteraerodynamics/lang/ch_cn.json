@@ -1,0 +1,4 @@
+{
+  "death.attack.low_pressure": "%1$s 由于低气压爆炸了",
+  "death.attack.low_pressure.player": "%1$s 在与 %2$s 战斗时由于低气压爆炸了"
+}

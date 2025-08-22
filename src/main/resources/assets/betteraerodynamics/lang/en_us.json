@@ -1,0 +1,4 @@
+{
+  "death.attack.low_pressure": "%1$s succumbed to low pressure",
+  "death.attack.low_pressure.player": "%1$s succumbed to low pressure whilst fighting %2$s"
+}

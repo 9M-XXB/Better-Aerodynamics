@@ -2,38 +2,54 @@ package rfb.betteraero;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.minecraft.server.world.ServerWorld;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.text.Text;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.util.Identifier;
+import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.damage.DamageTypes;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import main.java.rfb.betteraero.AtmosphereManager;
 
-public class BetterAerodynamics implements ModInitializer {
-	public static final String MOD_ID = "betteraerodynamics";
-	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-	@Override
+
+public class BetterAerodynamics implements ModInitializer {
+    public static final String MOD_ID = "betteraerodynamics";
+    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+
+    @Override
     public void onInitialize() {
         LOGGER.info("Better Aerodynamics initialized!");
 
-        // Example: run atmosphere calculations each tick
         ServerTickEvents.END_SERVER_TICK.register(server -> {
+            long time = server.getOverworld().getTime();
+            if ((time % 20) != 0) return;
+
             for (ServerWorld world : server.getWorlds()) {
                 for (PlayerEntity player : world.getPlayers()) {
-                    double density = AtmosphereManager.getAirDensity(world, player);
-                    double pressure = AtmosphereManager.getPressure(world, player);
-                    double temperature = AtmosphereManager.getTemperature(world, player);
+                    if (player.isCreative() || player.isSpectator()) continue;
 
-                    // Just demo output for now:
-                    player.sendMessage(Text.of(
-                        String.format("ρ=%.2f, P=%.1f kPa, T=%.1f °C",
-                                      density, pressure, temperature)
-                    ), true);
+                    float dps = AtmosphereManager.computeAtmosphereDamagePerSecond(world, player);
+                    if (dps > 0f) {
+                        player.damage(lowPressureDamage(world), dps);
+                    }
                 }
             }
         });
     }
+
+    private DamageSource lowPressureDamage(ServerWorld world) {
+    RegistryEntry<net.minecraft.entity.damage.DamageType> type =
+        world.getRegistryManager()
+             .get(RegistryKeys.DAMAGE_TYPE)
+             .entryOf(Identifier.of(BetterAerodynamics.MOD_ID, "low_pressure"));
+    return new DamageSource(type);
+    }
+
 }
+
+
