@@ -2,20 +2,19 @@ package rfb.betteraero;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.damage.DamageType;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.damage.DamageTypes;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import main.java.rfb.betteraero.AtmosphereManager;
-
-
+import rfb.betteraero.AtmosphereManager;
 
 public class BetterAerodynamics implements ModInitializer {
     public static final String MOD_ID = "betteraerodynamics";
@@ -25,6 +24,7 @@ public class BetterAerodynamics implements ModInitializer {
     public void onInitialize() {
         LOGGER.info("Better Aerodynamics initialized!");
 
+        // Run once/second (20 ticks)
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             long time = server.getOverworld().getTime();
             if ((time % 20) != 0) return;
@@ -36,6 +36,7 @@ public class BetterAerodynamics implements ModInitializer {
                     float dps = AtmosphereManager.computeAtmosphereDamagePerSecond(world, player);
                     if (dps > 0f) {
                         player.damage(lowPressureDamage(world), dps);
+
                     }
                 }
             }
@@ -43,13 +44,14 @@ public class BetterAerodynamics implements ModInitializer {
     }
 
     private DamageSource lowPressureDamage(ServerWorld world) {
-    RegistryEntry<net.minecraft.entity.damage.DamageType> type =
-        world.getRegistryManager()
-             .get(RegistryKeys.DAMAGE_TYPE)
-             .entryOf(Identifier.of(BetterAerodynamics.MOD_ID, "low_pressure"));
-    return new DamageSource(type);
-    }
+    RegistryKey<DamageType> key = RegistryKey.of(
+            RegistryKeys.DAMAGE_TYPE,
+            Identifier.of(MOD_ID, "low_pressure")   // <-- use Identifier.of
+    );
 
+    RegistryEntry<DamageType> entry = world.getRegistryManager()
+            .getOrThrow(RegistryKeys.DAMAGE_TYPE)  // <-- getOrThrow(...), not get(...)
+            .entryOf(key);                         // <-- entryOf(...)
+    return new DamageSource(entry);
 }
-
-
+}
