@@ -35,6 +35,7 @@ public class BetterAerodynamics implements ModInitializer {
 
                     float dps = AtmosphereManager.computeAtmosphereDamagePerSecond(world, player);
                     if (dps > 0f) {
+                        // make this work
                         player.damage(lowPressureDamage(world), dps);
 
                     }
